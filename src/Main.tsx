@@ -99,21 +99,11 @@ export const Main = ({
             ])}
           `}
         >
-          <Button size="S">
-            <Twemoji size={24} emoji="🥳" />
-          </Button>
-          <Button size="S">
-            <Twemoji size={24} emoji="💕" />
-          </Button>
-          <Button size="S">
-            <Twemoji size={24} emoji="💯" />
-          </Button>
-          <Button size="S">
-            <Twemoji size={24} emoji="😂" />
-          </Button>
-          <Button size="S">
-            <Twemoji size={24} emoji="🤔" />
-          </Button>
+          {["🥳", "💕", "💯", "😂", "🤔"].map((v) => (
+            <Button className="gtm-reaction" data-gtm size="S">
+              <Twemoji size={24} emoji={v} />
+            </Button>
+          ))}
         </div>
       </div>
       <div
