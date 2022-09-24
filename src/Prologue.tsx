@@ -33,13 +33,6 @@ export const Prologue = ({
     >
       <div
         css={css`
-          ${theme((o) => [o.typography(32).bold, o.font.text1])}
-        `}
-      >
-        mmSOtsuKen
-      </div>
-      <div
-        css={css`
           display: grid;
           gap: 16px;
           ${theme((o) => [o.font.text2])}
@@ -47,14 +40,14 @@ export const Prologue = ({
       >
         <span
           css={css`
-            ${theme((o) => [o.typography(14).bold])}
+            ${theme((o) => [o.typography(16).bold])}
           `}
         >
           これから、4枚のイラストを順番に見ていただきます。
         </span>
         <span
           css={css`
-            ${theme((o) => [o.typography(14).bold])}
+            ${theme((o) => [o.typography(16).bold])}
           `}
         >
           <span> </span>

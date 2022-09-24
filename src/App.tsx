@@ -9,11 +9,12 @@ import { Twemoji } from "./components/Emoji";
 import { maxWidth } from "@charcoal-ui/utils";
 import { Aligner } from "./components/Aligner";
 import { Prologue } from "./Prologue";
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { unreachable } from "./utils/unreachable";
 import { Epilogue } from "./Epilogue";
 import { Main } from "./Main";
 import { Step } from "./types";
+import { emojis } from "./constants";
 
 const theme = createTheme(styled);
 
@@ -113,7 +114,7 @@ const Contents = () => {
   );
 };
 
-const Header = () => (
+const Header = memo(() => (
   <div
     css={css`
       display: grid;
@@ -129,17 +130,15 @@ const Header = () => (
         gap: 8px;
       `}
     >
-      <Twemoji size={24} emoji="🥳" />
-      <Twemoji size={24} emoji="💕" />
-      <Twemoji size={24} emoji="😂" />
-      <Twemoji size={24} emoji="💯" />
-      <Twemoji size={24} emoji="🤔" />
+      {emojis.map((v) => (
+        <Twemoji key={v} size={24} emoji={v} />
+      ))}
     </div>
     <div />
   </div>
-);
+));
 
-const Footer = () => (
+const Footer = memo(() => (
   <div
     css={css`
       display: grid;
@@ -173,4 +172,4 @@ const Footer = () => (
       </a>
     </small>
   </div>
-);
+));

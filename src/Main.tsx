@@ -7,6 +7,7 @@ import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import styled, { css } from "styled-components";
 import { Twemoji } from "./components/Emoji";
+import { emojis } from "./constants";
 import { Step } from "./types";
 import { unreachable } from "./utils/unreachable";
 
@@ -99,8 +100,8 @@ export const Main = ({
             ])}
           `}
         >
-          {["🥳", "💕", "💯", "😂", "🤔"].map((v) => (
-            <Button className="gtm-reaction" data-gtm size="S">
+          {emojis.map((v) => (
+            <Button key={v} className="gtm-reaction" data-gtm size="S">
               <span
                 css={css`
                   pointer-events: none;
@@ -116,10 +117,47 @@ export const Main = ({
         css={css`
           display: grid;
           place-content: end;
+          place-items: center;
+          grid-auto-flow: column;
+          gap: 16px;
           max-width: ${MAX_WIDTH};
           ${theme((o) => [o.margin.top(24)])}
         `}
       >
+        <div
+          css={css`
+            display: flex;
+          `}
+        >
+          {([1, 2, 3, 4] as const).map((n) => (
+            <div
+              key={n}
+              css={[
+                css`
+                  display: grid;
+                  place-content: center;
+                  ${theme((o) => [
+                    o.width.px(40),
+                    o.height.px(40),
+                    o.borderRadius("oval"),
+                    o.typography(16).bold.preserveHalfLeading,
+                    o.font.text2,
+                  ])}
+                `,
+                n === step &&
+                  css`
+                    ${theme((o) => [o.bg.surface3])}
+                  `,
+                n < step &&
+                  css`
+                    ${theme((o) => [o.font.text4])}
+                  `,
+              ]}
+            >
+              {n}
+            </div>
+          ))}
+        </div>
         {step === 1 || step === 2 || step === 3 ? (
           <Button
             // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
