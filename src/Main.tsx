@@ -140,7 +140,7 @@ export const Main = ({
                     o.width.px(40),
                     o.height.px(40),
                     o.borderRadius("oval"),
-                    o.typography(16).bold.preserveHalfLeading,
+                    o.typography(12).bold.preserveHalfLeading,
                     o.font.text2,
                   ])}
                 `,
