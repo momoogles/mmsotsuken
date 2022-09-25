@@ -52,7 +52,6 @@ export const Prologue = ({
             ${theme((o) => [o.typography(16).bold])}
           `}
         >
-          <span> </span>
           <span
             css={css`
               ${theme((o) => [o.font.brand])}
@@ -83,7 +82,7 @@ export const Prologue = ({
               placeholder="IDを入力"
               value={uid}
               onChange={setUid}
-              maxLength={10}
+              maxLength={20}
               showCount
             />
           )}

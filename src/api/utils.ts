@@ -1,4 +1,4 @@
-import { DocumentReference, getDoc } from "firebase/firestore";
+import { DocumentReference, getDoc, setDoc } from "firebase/firestore";
 
 export async function getDocData<T>({
   docRef,
@@ -12,4 +12,14 @@ export async function getDocData<T>({
   } else {
     return null;
   }
+}
+
+export async function setDocData<T>({
+  docRef,
+  newDocument,
+}: {
+  docRef: DocumentReference<T>;
+  newDocument: T;
+}) {
+  await setDoc(docRef, newDocument);
 }

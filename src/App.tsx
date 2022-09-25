@@ -17,6 +17,8 @@ import { Step } from "./types";
 import { emojis } from "./constants";
 import { db } from "./api";
 import { getUser } from "./api/getUser";
+import { updateUser } from "./api/updateUser";
+import { UserDocument } from "./api/types";
 
 const theme = createTheme(styled);
 
@@ -50,13 +52,12 @@ export const App = () => {
 const Contents = () => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<Step>("prologue");
-  const [sessionGroup, setSessionGroup] = useState<"plain" | "with-motion">(
-    "plain"
-  );
+  const [sessionGroup, setSessionGroup] =
+    useState<UserDocument["group"]>("plain");
   const [sessionUid, setSessionUid] = useState<string | undefined>(undefined);
 
   const resetScrollTop = () =>
-    bodyRef.current.scrollIntoView({ behavior: "smooth" });
+    bodyRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const handleNext = (s: Step) => {
     setStep(s);
@@ -101,16 +102,38 @@ const Contents = () => {
               onNext={async ({ uid, step }) => {
                 try {
                   const data = await getUser(db, { id: uid });
-                  setSessionGroup(data.group ?? "plain");
+                  if (data === null) {
+                    throw new Error();
+                  }
+                  setSessionGroup(data.group);
                   setSessionUid(uid);
-                  handleNext(data.reactions !== undefined ? "epilogue" : step);
+                  return handleNext(data.locked ? "epilogue" : step);
                 } catch {
-                  handleNext(step);
+                  return handleNext(step);
                 }
               }}
             />
           ) : step === 1 || step === 2 || step === 3 || step === 4 ? (
-            <Main step={step} onNext={handleNext} />
+            <Main
+              step={step}
+              onNext={handleNext}
+              onEnd={async ({ step, reactions }) => {
+                try {
+                  if (sessionUid !== undefined) {
+                    await updateUser(db, {
+                      id: sessionUid,
+                      newDocument: {
+                        group: sessionGroup,
+                        locked: true,
+                        reactions,
+                      },
+                    });
+                  }
+                } finally {
+                  handleNext(step);
+                }
+              }}
+            />
           ) : step === "epilogue" ? (
             <Epilogue uid={sessionUid} />
           ) : (
@@ -131,7 +154,7 @@ const Contents = () => {
   );
 };
 
-const Header = memo(({ uid }: { uid: string }) => (
+const Header = memo(({ uid }: { uid?: string }) => (
   <div
     css={css`
       display: grid;

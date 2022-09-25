@@ -6,7 +6,7 @@ import {
 import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { Twemoji } from "./components/Emoji";
 import { emojis } from "./constants";
@@ -75,10 +75,14 @@ const MAIN_TEXT: {
 export const Main = ({
   step,
   onNext,
+  onEnd,
 }: {
   step: MainStep;
-  onNext(step: Extract<Step, 2 | 3 | 4 | "epilogue">): void;
+  onNext(step: Extract<Step, 2 | 3 | 4>): void;
+  onEnd(p: { step: "epilogue"; reactions: number[] }): void;
 }) => {
+  const reactionCountRef = useRef(0);
+  const [reactions, setReactions] = useState<number[]>([]);
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.returnValue = "";
@@ -119,15 +123,7 @@ export const Main = ({
             }
           `}
         >
-          <div
-            css={css`
-              @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
-                ${theme((o) => [o.padding.horizontal(16)])}
-              }
-            `}
-          >
-            <Image step={step} />
-          </div>
+          <Image step={step} />
         </div>
         <div
           css={css`
@@ -163,12 +159,12 @@ export const Main = ({
           </div>
         </div>
         <div
+          key={step}
           css={css`
             position: sticky;
             bottom: 0;
-            display: grid;
-            grid-auto-flow: column;
-            place-content: start;
+            display: flex;
+            flex-flow: row wrap;
             gap: 8px;
             ${theme((o) => [
               o.padding.horizontal(24).vertical(16),
@@ -178,15 +174,14 @@ export const Main = ({
           `}
         >
           {emojis.map((v) => (
-            <Button key={v} className="gtm-reaction" data-gtm size="S">
-              <span
-                css={css`
-                  pointer-events: none;
-                `}
-              >
-                <Twemoji size={24} emoji={v} />
-              </span>
-            </Button>
+            <EmojiButton
+              key={v}
+              emoji={v}
+              step={step}
+              onClick={() => {
+                reactionCountRef.current += 1;
+              }}
+            />
           ))}
         </div>
       </div>
@@ -241,7 +236,11 @@ export const Main = ({
             key={step}
             variant="Primary"
             size="M"
-            onClick={() => onNext((step + 1) as 2 | 3 | 4)}
+            onClick={() => {
+              onNext((step + 1) as 2 | 3 | 4);
+              setReactions((v) => [...v, reactionCountRef.current]);
+              reactionCountRef.current = 0;
+            }}
           >
             つぎへ
           </Button>
@@ -251,7 +250,12 @@ export const Main = ({
             key={step}
             variant="Primary"
             size="M"
-            onClick={() => onNext("epilogue")}
+            onClick={() => {
+              onEnd({
+                step: "epilogue",
+                reactions: [...reactions, reactionCountRef.current],
+              });
+            }}
           >
             おわる
           </Button>
@@ -354,6 +358,170 @@ const Image = ({ step }: { step: MainStep }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const VARIANT: {
+  [key in MainStep]: {
+    [key in typeof emojis[number]]: {
+      initCount: number;
+      mockCounts: [number, number, number, number, number];
+    };
+  };
+} = {
+  1: {
+    "😂": {
+      initCount: 1,
+      mockCounts: [1, 1, 0, 1, 0],
+    },
+    "😅": {
+      initCount: 22,
+      mockCounts: [1, 0, 2, 1, 1],
+    },
+    "😊": {
+      initCount: 46,
+      mockCounts: [4, 8, 3, 2, 4],
+    },
+    "😍": {
+      initCount: 13,
+      mockCounts: [1, 3, 2, 2, 1],
+    },
+    "🤔": {
+      initCount: 40,
+      mockCounts: [1, 2, 0, 1, 4],
+    },
+  },
+  2: {
+    "😂": {
+      initCount: 47,
+      mockCounts: [1, 1, 0, 2, 0],
+    },
+    "😅": {
+      initCount: 2,
+      mockCounts: [1, 0, 0, 1, 2],
+    },
+    "😊": {
+      initCount: 46,
+      mockCounts: [7, 3, 7, 7, 4],
+    },
+    "😍": {
+      initCount: 42,
+      mockCounts: [2, 3, 2, 6, 1],
+    },
+    "🤔": {
+      initCount: 14,
+      mockCounts: [1, 1, 1, 1, 4],
+    },
+  },
+  3: {
+    "😂": {
+      initCount: 1,
+      mockCounts: [2, 1, 1, 1, 0],
+    },
+    "😅": {
+      initCount: 42,
+      mockCounts: [1, 0, 2, 2, 1],
+    },
+    "😊": {
+      initCount: 46,
+      mockCounts: [2, 3, 2, 1, 4],
+    },
+    "😍": {
+      initCount: 92,
+      mockCounts: [5, 3, 8, 2, 8],
+    },
+    "🤔": {
+      initCount: 2,
+      mockCounts: [0, 0, 1, 4, 1],
+    },
+  },
+  4: {
+    "😂": {
+      initCount: 80,
+      mockCounts: [2, 2, 5, 1, 0],
+    },
+    "😅": {
+      initCount: 40,
+      mockCounts: [1, 0, 2, 2, 1],
+    },
+    "😊": {
+      initCount: 13,
+      mockCounts: [2, 3, 2, 1, 4],
+    },
+    "😍": {
+      initCount: 5,
+      mockCounts: [0, 0, 1, 2, 0],
+    },
+    "🤔": {
+      initCount: 69,
+      mockCounts: [2, 0, 1, 4, 1],
+    },
+  },
+};
+
+const EmojiButton = ({
+  emoji,
+  step,
+  onClick,
+}: {
+  emoji: typeof emojis[number];
+  step: MainStep;
+  onClick(): void;
+}) => {
+  const [current, setCurrent] = useState<number>(0);
+  const [plus, setPlus] = useState<number>(0);
+  const [count, setCount] = useState(VARIANT[step][emoji].initCount);
+
+  useEffect(() => {
+    const lag = Math.floor(Math.random() * 100);
+    const count = VARIANT[step][emoji].mockCounts[current] ?? 1;
+    const timeoutId = setTimeout(() => {
+      setCount((v) => v + count);
+      setCurrent((v) => (v < 4 ? v + 1 : 0));
+    }, 4000 + lag);
+    return () => clearTimeout(timeoutId);
+  }, [current]);
+
+  return (
+    <Button
+      className="gtm-reaction"
+      data-gtm
+      size="S"
+      onClick={() => {
+        setPlus((v) => v + 1);
+        onClick();
+      }}
+    >
+      <span
+        css={css`
+          position: relative;
+          z-index: 0;
+          pointer-events: none;
+        `}
+      >
+        <Twemoji size={24} emoji={emoji} />
+        <span
+          css={css`
+            margin-left: 4px;
+          `}
+        >
+          {count + plus}
+        </span>
+        {plus > 0 && (
+          <span
+            css={css`
+              position: absolute;
+              top: 0;
+              right: 0;
+              transform: translate(100%, -50%);
+              ${theme((o) => [o.typography(12).bold, o.font.assertive])}
+            `}
+          >
+            +{plus}
+          </span>
+        )}
+      </span>
+    </Button>
   );
 };
 

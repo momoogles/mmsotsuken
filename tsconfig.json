@@ -3,6 +3,10 @@
     "jsx": "react-jsx",
     "lib": ["ES2015", "DOM"],
     "experimentalDecorators": true,
-    "isolatedModules": true
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true
   }
 }
