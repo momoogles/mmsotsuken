@@ -24,6 +24,7 @@ const theme = createTheme(styled);
 
 const GlobalStyle = createGlobalStyle`
   body {
+    font-family: 'Noto Sans JP', sans-serif;;
     margin: 0px;
     ${theme((o) => [
       o.bg.background1,
