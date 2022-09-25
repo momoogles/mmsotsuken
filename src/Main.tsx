@@ -6,7 +6,7 @@ import {
 import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { Twemoji } from "./components/Emoji";
 import { emojis } from "./constants";
@@ -79,6 +79,15 @@ export const Main = ({
   step: MainStep;
   onNext(step: Extract<Step, 2 | 3 | 4 | "epilogue">): void;
 }) => {
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.returnValue = "";
+      return "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   return (
     <div
       css={css`
@@ -234,7 +243,7 @@ export const Main = ({
             size="M"
             onClick={() => onNext((step + 1) as 2 | 3 | 4)}
           >
-            次へ進む
+            つぎへ
           </Button>
         ) : step === 4 ? (
           <Button
