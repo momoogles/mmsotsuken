@@ -315,6 +315,7 @@ const Image = ({ step }: { step: MainStep }) => {
         >
           {[MAIN_TEXT[step].main, MAIN_TEXT[step].sub].map((v, i) => (
             <div
+              key={v}
               css={css`
                 overflow: hidden;
                 width: fit-content;

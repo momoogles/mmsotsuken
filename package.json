@@ -22,6 +22,7 @@
     "@charcoal-ui/styled": "alpha",
     "@charcoal-ui/theme": "alpha",
     "@charcoal-ui/utils": "^1.1.0-alpha.0",
+    "firebase": "^9.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-spring": "^9.5.2",

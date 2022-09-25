@@ -3,7 +3,7 @@ import { createTheme } from "@charcoal-ui/styled";
 
 const theme = createTheme(styled);
 
-export const Epilogue = () => {
+export const Epilogue = ({ uid }: { uid?: string }) => {
   return (
     <div
       css={css`
@@ -17,9 +17,10 @@ export const Epilogue = () => {
     >
       <span
         css={css`
-          ${theme((o) => [o.typography(20).bold, o.font.text1])}
+          ${theme((o) => [o.typography(16).bold, o.font.text1])}
         `}
       >
+        {uid && `ID: ${uid} の回答は終了しました。`}
         ご協力ありがとうございました！
       </span>
     </div>

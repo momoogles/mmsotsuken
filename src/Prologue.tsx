@@ -8,6 +8,7 @@ import {
   GUTTER_UNIT,
 } from "@charcoal-ui/foundation";
 import { Step } from "./types";
+import { Spinner } from "./components/Spinner";
 
 const theme = createTheme(styled);
 
@@ -16,8 +17,9 @@ const TEXT_FIELD_MAX_WIDTH = columnSystem(3, COLUMN_UNIT, GUTTER_UNIT);
 export const Prologue = ({
   onNext,
 }: {
-  onNext(step: Extract<Step, 1>): void;
+  onNext(p: { uid: string; step: Extract<Step, 1> }): Promise<void>;
 }) => {
+  const [loading, setLoading] = useState(false);
   const [uid, setUid] = useState("");
   const [isTypingUid, setIsTypingUid] = useState(false);
   return (
@@ -91,8 +93,20 @@ export const Prologue = ({
             IDを入力
           </Button>
         ) : (
-          <Button size="M" onClick={() => onNext(1)}>
-            はじめる
+          <Button
+            variant="Primary"
+            disabled={loading}
+            size="M"
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await onNext({ uid, step: 1 });
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            {loading ? <Spinner /> : "はじめる"}
           </Button>
         )}
       </div>

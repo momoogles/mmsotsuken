@@ -15,6 +15,8 @@ import { Epilogue } from "./Epilogue";
 import { Main } from "./Main";
 import { Step } from "./types";
 import { emojis } from "./constants";
+import { db } from "./api";
+import { getUser } from "./api/getUser";
 
 const theme = createTheme(styled);
 
@@ -48,6 +50,10 @@ export const App = () => {
 const Contents = () => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<Step>("prologue");
+  const [sessionGroup, setSessionGroup] = useState<"plain" | "with-motion">(
+    "plain"
+  );
+  const [sessionUid, setSessionUid] = useState<string | undefined>(undefined);
 
   const resetScrollTop = () =>
     bodyRef.current.scrollIntoView({ behavior: "smooth" });
@@ -72,7 +78,7 @@ const Contents = () => {
         `}
       >
         <Aligner>
-          <Header />
+          <Header uid={sessionUid} />
         </Aligner>
       </header>
       <div
@@ -91,11 +97,22 @@ const Contents = () => {
       >
         <Aligner>
           {step === "prologue" ? (
-            <Prologue onNext={handleNext} />
+            <Prologue
+              onNext={async ({ uid, step }) => {
+                try {
+                  const data = await getUser(db, { id: uid });
+                  setSessionGroup(data.group ?? "plain");
+                  setSessionUid(uid);
+                  handleNext(data.reactions !== undefined ? "epilogue" : step);
+                } catch {
+                  handleNext(step);
+                }
+              }}
+            />
           ) : step === 1 || step === 2 || step === 3 || step === 4 ? (
             <Main step={step} onNext={handleNext} />
           ) : step === "epilogue" ? (
-            <Epilogue />
+            <Epilogue uid={sessionUid} />
           ) : (
             unreachable(step)
           )}
@@ -114,7 +131,7 @@ const Contents = () => {
   );
 };
 
-const Header = memo(() => (
+const Header = memo(({ uid }: { uid: string }) => (
   <div
     css={css`
       display: grid;
@@ -134,7 +151,20 @@ const Header = memo(() => (
         <Twemoji key={v} size={24} emoji={v} />
       ))}
     </div>
-    <div />
+    <div
+      css={css`
+        display: grid;
+        place-content: end;
+      `}
+    >
+      <span
+        css={css`
+          ${theme((o) => [o.typography(14).bold])}
+        `}
+      >
+        {uid && `ID: ${uid}`}
+      </span>
+    </div>
   </div>
 ));
 
