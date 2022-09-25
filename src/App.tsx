@@ -117,6 +117,7 @@ const Contents = () => {
           ) : step === 1 || step === 2 || step === 3 || step === 4 ? (
             <Main
               step={step}
+              group={sessionGroup}
               onNext={handleNext}
               onEnd={async ({ step, reactions }) => {
                 try {

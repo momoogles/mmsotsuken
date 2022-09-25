@@ -6,6 +6,8 @@ const theme = createTheme(styled);
 export const Spinner = () => (
   <div
     css={css`
+      opacity: 0;
+      transform: scale(0);
       animation: ${pop} 0.8s infinite;
       width: 24px;
       height: 24px;
@@ -15,10 +17,6 @@ export const Spinner = () => (
 );
 
 const pop = keyframes`
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
   50% {
     opacity: 1;
     transform: scale(1);

@@ -6,9 +6,22 @@ import {
 import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
-import { FC, useEffect, useRef, useState } from "react";
+import {
+  ComponentProps,
+  FC,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import styled, { css, keyframes } from "styled-components";
+import { UserDocument } from "./api/types";
 import { Twemoji } from "./components/Emoji";
+import {
+  createFloatingEmoji,
+  FloatingEmojis,
+} from "./components/FloatingEmojis";
+import { Spinner } from "./components/Spinner";
 import { emojis } from "./constants";
 import { ChatIcon, LetterIcon, TalkIcon, VideoIcon } from "./Icons";
 import { Step } from "./types";
@@ -74,13 +87,16 @@ const MAIN_TEXT: {
 
 export const Main = ({
   step,
+  group,
   onNext,
   onEnd,
 }: {
   step: MainStep;
+  group: UserDocument["group"];
   onNext(step: Extract<Step, 2 | 3 | 4>): void;
-  onEnd(p: { step: "epilogue"; reactions: number[] }): void;
+  onEnd(p: { step: "epilogue"; reactions: number[] }): Promise<void>;
 }) => {
+  const [endLoading, setEndLoading] = useState(false);
   const reactionCountRef = useRef(0);
   const [reactions, setReactions] = useState<number[]>([]);
   useEffect(() => {
@@ -176,6 +192,7 @@ export const Main = ({
           {emojis.map((v) => (
             <EmojiButton
               key={v}
+              withMotion={group === "with-motion"}
               emoji={v}
               step={step}
               onClick={() => {
@@ -248,16 +265,22 @@ export const Main = ({
           <Button
             // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
             key={step}
+            disabled={endLoading}
             variant="Primary"
             size="M"
-            onClick={() => {
-              onEnd({
-                step: "epilogue",
-                reactions: [...reactions, reactionCountRef.current],
-              });
+            onClick={async () => {
+              try {
+                setEndLoading(true);
+                await onEnd({
+                  step: "epilogue",
+                  reactions: [...reactions, reactionCountRef.current],
+                });
+              } finally {
+                setEndLoading(false);
+              }
             }}
           >
-            おわる
+            {endLoading ? <Spinner /> : "おわる"}
           </Button>
         ) : (
           unreachable(step)
@@ -459,18 +482,67 @@ const VARIANT: {
   },
 };
 
+const LEVEL_THRESHOLD = [1, 2, 5, 10] as const;
+
+const useLevel = () => {
+  const growingRef = useRef(false);
+  const [levelCount, setLevelCount] = useState<number>(0);
+  const level: 1 | 2 | 3 | 4 | 5 =
+    levelCount < LEVEL_THRESHOLD[0]
+      ? 1
+      : levelCount < LEVEL_THRESHOLD[1]
+      ? 2
+      : levelCount < LEVEL_THRESHOLD[2]
+      ? 3
+      : levelCount < LEVEL_THRESHOLD[3]
+      ? 4
+      : 5;
+
+  useEffect(() => {
+    if (levelCount > 0) {
+      const timeoutId = setTimeout(() => {
+        growingRef.current = false;
+        setLevelCount((v) =>
+          v >= LEVEL_THRESHOLD[3]
+            ? LEVEL_THRESHOLD[2]
+            : v >= LEVEL_THRESHOLD[2]
+            ? LEVEL_THRESHOLD[1]
+            : v >= LEVEL_THRESHOLD[1]
+            ? LEVEL_THRESHOLD[0]
+            : 0
+        );
+      }, 600);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [levelCount]);
+
+  const incrementLevelCount = useCallback(() => {
+    growingRef.current = true;
+    setLevelCount((v) => v + 1);
+  }, []);
+
+  return { level, incrementLevelCount, growing: growingRef.current };
+};
+
 const EmojiButton = ({
   emoji,
   step,
+  withMotion,
   onClick,
 }: {
   emoji: typeof emojis[number];
   step: MainStep;
+  withMotion?: boolean;
   onClick(): void;
 }) => {
   const [current, setCurrent] = useState<number>(0);
-  const [plus, setPlus] = useState<number>(0);
+  const [plusCount, setPlusCount] = useState<number>(0);
   const [count, setCount] = useState(VARIANT[step][emoji].initCount);
+  const [floatingEmojis, setFloatingEmojis] = useState<
+    ComponentProps<typeof FloatingEmojis>["floatingEmojis"]
+  >([]);
+
+  const { level, incrementLevelCount, growing } = useLevel();
 
   useEffect(() => {
     const lag = Math.floor(Math.random() * 100);
@@ -482,13 +554,50 @@ const EmojiButton = ({
     return () => clearTimeout(timeoutId);
   }, [current]);
 
+  const circleScale =
+    level === 1
+      ? 1.02
+      : level === 2
+      ? 1.06
+      : level === 3
+      ? 1.14
+      : level === 4
+      ? 1.22
+      : 1.4;
+  const twemojiScale =
+    level === 1
+      ? 1.0
+      : level === 2
+      ? 1.04
+      : level === 3
+      ? 1.1
+      : level === 4
+      ? 1.2
+      : 1.34;
+
   return (
     <Button
       className="gtm-reaction"
       data-gtm
       size="S"
       onClick={() => {
-        setPlus((v) => v + 1);
+        setPlusCount((v) => v + 1);
+
+        incrementLevelCount();
+        const maxDurationMs = 1500;
+        setFloatingEmojis((v) => [
+          ...v,
+          {
+            id: (v[v.length - 1]?.id ?? 0) + 1,
+            level,
+            emoji,
+            ...createFloatingEmoji({ maxDurationMs }),
+          },
+        ]);
+        setTimeout(() => {
+          setFloatingEmojis((v) => v.slice(1));
+        }, maxDurationMs);
+
         onClick();
       }}
     >
@@ -497,27 +606,116 @@ const EmojiButton = ({
           position: relative;
           z-index: 0;
           pointer-events: none;
+          display: inline-flex;
+          align-items: center;
         `}
       >
-        <Twemoji size={24} emoji={emoji} />
+        <span
+          css={[
+            css`
+              display: inline-grid;
+              place-content: center;
+            `,
+            withMotion &&
+              css`
+                position: relative;
+                z-index: 0;
+              `,
+          ]}
+        >
+          <span
+            key={plusCount}
+            css={[
+              css`
+                display: inline-grid;
+                place-content: center;
+                transition: transform 0.2s ease-in;
+              `,
+              withMotion &&
+                growing &&
+                emojiPulseAnimationCss({
+                  initScale: twemojiScale,
+                }),
+            ]}
+          >
+            <Twemoji size={20} emoji={emoji} />
+          </span>
+          {withMotion &&
+            growing &&
+            floatingEmojis.map(({ id }) => (
+              <div
+                key={id}
+                css={[
+                  css`
+                    position: absolute;
+                    z-index: -1;
+                    border-radius: 50%;
+                    inset: 0;
+                  `,
+                  level < 3
+                    ? css`
+                        border: 1px solid ${(p) => p.theme.color.brand};
+                      `
+                    : level < 5
+                    ? css`
+                        border: 1px solid #b356de;
+                      `
+                    : css`
+                        border: 2px solid ${(p) => p.theme.color.assertive};
+                      `,
+                  circlePulseAnimationCss({ initScale: circleScale }),
+                ]}
+              />
+            ))}
+        </span>
         <span
           css={css`
             margin-left: 4px;
           `}
         >
-          {count + plus}
+          {count + plusCount}
         </span>
-        {plus > 0 && (
+        {plusCount > 0 && (
+          <span
+            css={[
+              css`
+                position: absolute;
+                top: 0;
+                right: 0;
+                transform: translate(100%, -50%);
+                ${theme((o) => [o.typography(12).bold, o.font.assertive])}
+              `,
+              withMotion &&
+                css`
+                  transition: color 0.2s ease-in;
+                `,
+              withMotion &&
+                (level < 3
+                  ? css`
+                      ${theme((o) => [o.font.brand])}
+                    `
+                  : level < 5
+                  ? css`
+                      color: #b356de;
+                    `
+                  : css`
+                      ${theme((o) => [o.font.assertive])}
+                    `),
+            ]}
+          >
+            +{plusCount}
+          </span>
+        )}
+        {withMotion && (
           <span
             css={css`
               position: absolute;
               top: 0;
               right: 0;
-              transform: translate(100%, -50%);
-              ${theme((o) => [o.typography(12).bold, o.font.assertive])}
+              transform: translate(105%, -120%);
             `}
           >
-            +{plus}
+            <FloatingEmojis floatingEmojis={floatingEmojis} />
           </span>
         )}
       </span>
@@ -525,6 +723,16 @@ const EmojiButton = ({
   );
 };
 
+const slideToRight = keyframes`
+  100% {
+    transform: translateX(101%);
+  }
+`;
+const slideToLeft = keyframes`
+  100% {
+    transform: translateX(-101%);
+  }
+`;
 const slideInAnimationCss = ({
   to,
   delay,
@@ -532,6 +740,7 @@ const slideInAnimationCss = ({
   to: "right" | "left";
   delay: `${number}s`;
 }) => css`
+  transform: translateX(0);
   animation: ${to === "right"
       ? slideToRight
       : to === "left"
@@ -540,20 +749,27 @@ const slideInAnimationCss = ({
     0.2s ${delay} cubic-bezier(0.9, 0.01, 0.6, 1.01) forwards;
 `;
 
-const slideToRight = keyframes`
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(101%);
+const emojiPulse = ({ initScale }: { initScale: number }) => keyframes`
+  50% {
+    transform: scale(${initScale - 0.2})
   }
 `;
+const emojiPulseAnimationCss = ({ initScale }: { initScale: number }) => css`
+  transform: scale(${initScale});
+  animation: ${emojiPulse({ initScale })} 0.2s linear 1;
+`;
 
-const slideToLeft = keyframes`
-  0% {
-    transform: translateX(0);
+const circlePulse = ({ initScale }: { initScale: number }) => keyframes`
+  50% {
+    opacity: 0.8;
   }
-  100% {
-    transform: translateX(-101%);
+  100%{
+    transform: scale(${initScale + 1});
+    opacity: 0;
   }
+`;
+const circlePulseAnimationCss = ({ initScale }: { initScale: number }) => css`
+  opacity: 0;
+  transform: scale(${initScale});
+  animation: ${circlePulse({ initScale })} 0.4s 0.1s forwards;
 `;
