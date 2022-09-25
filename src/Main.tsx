@@ -5,21 +5,78 @@ import {
 } from "@charcoal-ui/foundation";
 import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
-import styled, { css } from "styled-components";
+import { maxWidth } from "@charcoal-ui/utils";
+import { FC } from "react";
+import styled, { css, keyframes } from "styled-components";
 import { Twemoji } from "./components/Emoji";
 import { emojis } from "./constants";
+import { ChatIcon, LetterIcon, TalkIcon, VideoIcon } from "./Icons";
 import { Step } from "./types";
 import { unreachable } from "./utils/unreachable";
 
 const theme = createTheme(styled);
 
+type MainStep = Extract<Step, 1 | 2 | 3 | 4>;
+
 const MAX_WIDTH = columnSystem(10, COLUMN_UNIT, GUTTER_UNIT);
+
+const TEXT_NEGATIVE_MARGIN_Y = {
+  desktop: 24,
+  mobile: 12,
+};
+const TEXT_NEGATIVE_MARGIN_X = {
+  desktop: 60,
+  mobile: 32,
+};
+
+const MAIN_TEXT: {
+  [key in MainStep]: {
+    main: string;
+    sub: string;
+    title: string;
+    description: string;
+    Icon: FC;
+  };
+} = {
+  1: {
+    main: "テキストチャットで",
+    sub: "伝えられた",
+    title: "シーン１：相手とのテキストチャットで「好き」などと伝えられる",
+    description:
+      "LINEやInstagramのDMなど、相手と自分だけのチャットの中での出来事です。",
+    Icon: ChatIcon,
+  },
+  2: {
+    main: "ビデオ通話で",
+    sub: "言われた",
+    title: "シーン３：ビデオ通話している時に相手の口から直接「好き」と言われる",
+    description:
+      "寝る前や休日に暇で通話しているかもしれないし、勉強などを一緒にしていることもあるでしょう。",
+    Icon: VideoIcon,
+  },
+  3: {
+    main: "面と向かって",
+    sub: "言われた",
+    title: "シーン３：一緒の場所にいる時に相手の口から直接「好き」と言われる",
+    description:
+      "二人で出かけていて雰囲気のいいタイミングで言われるかもしれないし、他の人がいるところでこっそりと言われるかもしれません。",
+    Icon: TalkIcon,
+  },
+  4: {
+    main: "手書きの手紙を",
+    sub: "渡された",
+    title: "シーン２：告白が書かれた手書きの文章で「好き」などと伝えられる",
+    description:
+      "誕生日などのプレゼントと一緒に入っていたり、本など書類に紛れていたり...急に手渡しされることもあるでしょう。",
+    Icon: LetterIcon,
+  },
+};
 
 export const Main = ({
   step,
   onNext,
 }: {
-  step: Extract<Step, 1 | 2 | 3 | 4>;
+  step: MainStep;
   onNext(step: Extract<Step, 2 | 3 | 4 | "epilogue">): void;
 }) => {
   return (
@@ -35,7 +92,7 @@ export const Main = ({
       <div
         css={css`
           ${theme((o) => [
-            o.bg.surface3,
+            o.bg.background1,
             o.borderRadius(24),
             o.padding.top(8).bottom(24),
           ])}
@@ -44,19 +101,24 @@ export const Main = ({
         <div
           css={css`
             width: 100%;
-            height: 600px;
             display: grid;
             place-content: center;
-            ${theme((o) => [o.font.text1])}
+            box-sizing: border-box;
+            ${theme((o) => [o.font.text1, o.padding.all(24)])}
+            @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+              ${theme((o) => [o.padding.all(16)])}
+            }
           `}
         >
-          <span
+          <div
             css={css`
-              ${theme((o) => [o.typography(32).bold])}
+              @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                ${theme((o) => [o.padding.horizontal(16)])}
+              }
             `}
           >
-            画像{step}
-          </span>
+            <Image step={step} />
+          </div>
         </div>
         <div
           css={css`
@@ -73,16 +135,22 @@ export const Main = ({
           <div
             css={css`
               ${theme((o) => [o.typography(20).bold, o.font.text2])}
+              @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                ${theme((o) => [o.typography(16).bold])}
+              }
             `}
           >
-            画像{step}
+            {MAIN_TEXT[step].title}
           </div>
           <div
             css={css`
-              ${theme((o) => [o.typography(16), o.font.text3])}
+              ${theme((o) => [o.typography(14), o.font.text3])}
+              @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                ${theme((o) => [o.typography(12).bold])}
+              }
             `}
           >
-            画像{step}
+            {MAIN_TEXT[step].description}
           </div>
         </div>
         <div
@@ -185,3 +253,129 @@ export const Main = ({
     </div>
   );
 };
+
+const Image = ({ step }: { step: MainStep }) => {
+  const Icon = MAIN_TEXT[step].Icon;
+  return (
+    <div
+      css={css`
+        padding: ${TEXT_NEGATIVE_MARGIN_Y.desktop}px
+          ${TEXT_NEGATIVE_MARGIN_X.desktop}px;
+        @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+          padding: ${TEXT_NEGATIVE_MARGIN_Y.mobile}px
+            ${TEXT_NEGATIVE_MARGIN_X.mobile}px;
+        }
+      `}
+    >
+      <div
+        css={css`
+          display: grid;
+          place-items: center;
+          ${theme((o) => [o.bg.surface3, o.padding.all(24)])}
+          position: relative;
+        `}
+      >
+        <Icon />
+        <div
+          css={[
+            css`
+              display: grid;
+              position: absolute;
+              top: -${TEXT_NEGATIVE_MARGIN_Y.desktop}px;
+              @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                top: -${TEXT_NEGATIVE_MARGIN_Y.mobile}px;
+              }
+            `,
+            step % 2 === 0 &&
+              css`
+                place-items: start;
+                left: -${TEXT_NEGATIVE_MARGIN_X.desktop}px;
+                @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                  left: -${TEXT_NEGATIVE_MARGIN_X.mobile}px;
+                }
+              `,
+            step % 2 !== 0 &&
+              css`
+                place-items: end;
+                right: -${TEXT_NEGATIVE_MARGIN_X.desktop}px;
+                @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                  right: -${TEXT_NEGATIVE_MARGIN_X.mobile}px;
+                }
+              `,
+          ]}
+        >
+          {[MAIN_TEXT[step].main, MAIN_TEXT[step].sub].map((v, i) => (
+            <div
+              css={css`
+                overflow: hidden;
+                width: fit-content;
+                white-space: none;
+                position: relative;
+                ${theme((o) => [o.bg.surface1])}
+                ${theme((o) => [o.typography(32).bold])}
+                @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+                  ${theme((o) => [o.typography(20).bold])}
+                }
+              `}
+            >
+              {v}
+              <div
+                key={step}
+                css={[
+                  css`
+                    position: absolute;
+                    inset: 0;
+                    ${theme((o) => [o.bg.text1])};
+                  `,
+                  i === 0 &&
+                    slideInAnimationCss({
+                      to: step % 2 === 0 ? "right" : "left",
+                      delay: "0.2s",
+                    }),
+                  i === 1 &&
+                    slideInAnimationCss({
+                      to: step % 2 === 0 ? "right" : "left",
+                      delay: "0.3s",
+                    }),
+                ]}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const slideInAnimationCss = ({
+  to,
+  delay,
+}: {
+  to: "right" | "left";
+  delay: `${number}s`;
+}) => css`
+  animation: ${to === "right"
+      ? slideToRight
+      : to === "left"
+      ? slideToLeft
+      : unreachable(to)}
+    0.2s ${delay} cubic-bezier(0.9, 0.01, 0.6, 1.01) forwards;
+`;
+
+const slideToRight = keyframes`
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(101%);
+  }
+`;
+
+const slideToLeft = keyframes`
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-101%);
+  }
+`;

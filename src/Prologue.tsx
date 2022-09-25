@@ -43,7 +43,7 @@ export const Prologue = ({
             ${theme((o) => [o.typography(16).bold])}
           `}
         >
-          これから、4枚のイラストを順番に見ていただきます。
+          あなたが好きな人からこんなコクハクをされたらどう思いますか？
         </span>
         <span
           css={css`
@@ -58,8 +58,7 @@ export const Prologue = ({
           >
             "リアクション機能"
           </span>
-          <span> </span>
-          を使い、あなたのイラストへの気持ちを表現しましょう！
+          を使って評価しましょう！
         </span>
       </div>
       <div

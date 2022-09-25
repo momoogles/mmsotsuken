@@ -1,1 +1,1 @@
-export const emojis = ["🥳", "💕", "💯", "😂", "🤔"] as const;
+export const emojis = ["🥰", "😊", "🤔", "😂", "😅"] as const;

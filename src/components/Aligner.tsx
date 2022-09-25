@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
-import { PropsWithChildren, ComponentProps } from "react";
+import { PropsWithChildren } from "react";
 import {
   columnSystem,
   COLUMN_UNIT,
