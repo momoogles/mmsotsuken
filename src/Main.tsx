@@ -20,6 +20,7 @@ import { Twemoji } from "./components/Emoji";
 import {
   createFloatingEmoji,
   FloatingEmojis,
+  MAX_LEVEL_SIZE,
 } from "./components/FloatingEmojis";
 import { Spinner } from "./components/Spinner";
 import { emojis } from "./constants";
@@ -710,9 +711,8 @@ const EmojiButton = ({
           <span
             css={css`
               position: absolute;
-              top: 0;
+              top: -${MAX_LEVEL_SIZE}px;
               right: 0;
-              transform: translate(105%, -120%);
             `}
           >
             <FloatingEmojis floatingEmojis={floatingEmojis} />

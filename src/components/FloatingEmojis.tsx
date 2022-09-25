@@ -2,6 +2,8 @@ import { ComponentProps } from "react";
 import { css, keyframes } from "styled-components";
 import { Twemoji } from "./Emoji";
 
+export const MAX_LEVEL_SIZE = 20;
+
 export const FloatingEmojis = ({
   floatingEmojis,
 }: {
@@ -13,16 +15,15 @@ export const FloatingEmojis = ({
     positionXPx: number;
   }[];
 }) => {
-  const maxLevelSize = 20;
   const emojiSize = (level: 1 | 2 | 3 | 4 | 5) =>
-    level === 1 ? 12 : level === 2 ? 14 : level === 3 ? 16 : maxLevelSize;
+    level === 1 ? 12 : level === 2 ? 14 : level === 3 ? 16 : MAX_LEVEL_SIZE;
   return (
     <span
       css={css`
         position: relative;
         z-index: 0;
-        width: ${maxLevelSize}px;
-        height: ${maxLevelSize}px;
+        width: ${MAX_LEVEL_SIZE}px;
+        height: ${MAX_LEVEL_SIZE}px;
       `}
     >
       {floatingEmojis.map(({ id, level, emoji, duration, positionXPx }) => (
@@ -55,7 +56,7 @@ const floatAnimationCss = ({
   duration: `${number}ms`;
   initXPx: number;
 }) => css`
-  transform: translate(${initXPx}px, -100%);
+  transform: translate(${initXPx}px, 0);
   opacity: 0;
   animation: ${float({ initXPx })} ${duration} 0.1s ease-out forwards;
 `;
