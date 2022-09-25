@@ -3,12 +3,21 @@ import {
   COLUMN_UNIT,
   GUTTER_UNIT,
 } from "@charcoal-ui/foundation";
-import { Button } from "@charcoal-ui/react";
+import { Button, IconButton } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
 import {
+  arrow,
+  autoPlacement,
+  offset,
+  shift,
+  Strategy,
+  useFloating,
+} from "@floating-ui/react-dom";
+import {
   ComponentProps,
   FC,
+  forwardRef,
   useCallback,
   useEffect,
   useRef,
@@ -54,32 +63,32 @@ const MAIN_TEXT: {
 } = {
   1: {
     main: "テキストチャットで",
-    sub: "伝えられた",
-    title: "シーン１：相手とのテキストチャットで「好き」などと伝えられる",
+    sub: "告白される",
+    title: "シーン１：相手とのテキストチャットで「好き」などと伝えられた",
     description:
       "LINEやInstagramのDMなど、相手と自分だけのチャットの中での出来事です。",
     Icon: ChatIcon,
   },
   2: {
     main: "ビデオ通話で",
-    sub: "言われた",
-    title: "シーン２：ビデオ通話している時に相手の口から直接「好き」と言われる",
+    sub: "告白される",
+    title: "シーン２：ビデオ通話している時に相手の口から直接「好き」と言われた",
     description:
       "寝る前や休日に暇で通話しているかもしれないし、勉強などを一緒にしていることもあるでしょう。",
     Icon: VideoIcon,
   },
   3: {
     main: "面と向かって",
-    sub: "言われた",
-    title: "シーン３：一緒の場所にいる時に相手の口から直接「好き」と言われる",
+    sub: "告白される",
+    title: "シーン３：一緒の場所にいる時に相手の口から直接「好き」と言われた",
     description:
       "二人で出かけていて雰囲気のいいタイミングで言われるかもしれないし、他の人がいるところでこっそりと言われるかもしれません。",
     Icon: TalkIcon,
   },
   4: {
-    main: "手書きの手紙を",
-    sub: "渡された",
-    title: "シーン４：告白が書かれた手書きの文章で「好き」などと伝えられる",
+    main: "手書きの手紙で",
+    sub: "告白される",
+    title: "シーン４：「好きです」と書かれた手書きの文章を渡された",
     description:
       "誕生日などのプレゼントと一緒に入っていたり、本など書類に紛れていたり...急に手渡しされることもあるでしょう。",
     Icon: LetterIcon,
@@ -97,9 +106,24 @@ export const Main = ({
   onNext(step: Extract<Step, 2 | 3 | 4>): void;
   onEnd(p: { step: "epilogue"; reactions: number[] }): Promise<void>;
 }) => {
+  const [reacted, setReacted] = useState(false);
   const [endLoading, setEndLoading] = useState(false);
   const reactionCountRef = useRef(0);
   const [reactions, setReactions] = useState<number[]>([]);
+  const [tooltip, setTooltip] = useState(true);
+
+  const { x, y, strategy, reference, floating, placement } = useFloating({
+    strategy: "absolute",
+    middleware: [autoPlacement({ alignment: "start" }), offset(24)],
+  });
+
+  const staticSide = {
+    top: "bottom",
+    right: "left",
+    bottom: "top",
+    left: "right",
+  }[placement.split("-")[0]!];
+
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.returnValue = "";
@@ -180,9 +204,6 @@ export const Main = ({
           css={css`
             position: sticky;
             bottom: 0;
-            display: flex;
-            flex-flow: row wrap;
-            gap: 8px;
             ${theme((o) => [
               o.padding.horizontal(24).vertical(16),
               o.margin.top(24),
@@ -190,19 +211,39 @@ export const Main = ({
             ])}
           `}
         >
-          {emojis.map((v) => (
-            <EmojiButton
-              key={v}
-              withMotion={group === "with-motion"}
-              emoji={v}
-              step={step}
-              onClick={() => {
-                reactionCountRef.current += 1;
-              }}
+          <div
+            ref={reference}
+            css={css`
+              display: flex;
+              gap: 8px;
+              flex-flow: row wrap;
+            `}
+          >
+            {emojis.map((v) => (
+              <EmojiButton
+                key={v}
+                withMotion={group === "with-motion"}
+                emoji={v}
+                step={step}
+                onClick={() => {
+                  setReacted(true);
+                  reactionCountRef.current += 1;
+                }}
+              />
+            ))}
+          </div>
+          {tooltip && (
+            <Tooltip
+              ref={floating}
+              strategy={strategy}
+              y={y}
+              x={x}
+              onConfirm={() => setTooltip(false)}
             />
-          ))}
+          )}
         </div>
       </div>
+
       <div
         css={css`
           display: grid;
@@ -252,6 +293,7 @@ export const Main = ({
           <Button
             // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
             key={step}
+            disabled={!reacted}
             variant="Primary"
             size="M"
             onClick={() => {
@@ -313,6 +355,35 @@ const Image = ({ step }: { step: MainStep }) => {
         `}
       >
         <Icon />
+        <div
+          css={css`
+            overflow: hidden;
+            width: fit-content;
+            white-space: none;
+            position: relative;
+            ${theme((o) => [o.bg.surface1])}
+            ${theme((o) => [o.typography(20).bold])}
+                @media ${(p) => maxWidth(p.theme.breakpoint.screen2)} {
+              ${theme((o) => [o.typography(16).bold])}
+            }
+          `}
+        >
+          どう思いますか？
+          <div
+            key={step}
+            css={[
+              css`
+                position: absolute;
+                inset: 0;
+                ${theme((o) => [o.bg.text1])};
+              `,
+              slideInAnimationCss({
+                to: step % 2 === 0 ? "left" : "right",
+                delay: "0.4s",
+              }),
+            ]}
+          />
+        </div>
         <div
           css={[
             css`
@@ -773,3 +844,68 @@ const circlePulseAnimationCss = ({ initScale }: { initScale: number }) => css`
   transform: scale(${initScale});
   animation: ${circlePulse({ initScale })} 0.4s 0.1s forwards;
 `;
+
+const Tooltip = forwardRef<
+  HTMLDivElement,
+  { strategy: Strategy; x: number | null; y: number | null; onConfirm(): void }
+>(({ strategy, y, x, onConfirm }, ref) => (
+  <div
+    ref={ref}
+    css={css`
+      ${theme((o) => [o.bg.brand, o.borderRadius(16)])}
+    `}
+    style={{
+      position: strategy,
+      top: y ?? 0,
+      left: x ?? 0,
+    }}
+  >
+    <div
+      css={css`
+        position: relative;
+        z-index: 0;
+        ${theme((o) => [o.padding.all(16)])}
+
+        ::after {
+          content: "";
+          position: absolute;
+          bottom: -6px;
+          left: 60%;
+          width: 12px;
+          height: 12px;
+          transform: rotate(45deg);
+          ${theme((o) => [o.bg.brand])}
+        }
+      `}
+    >
+      <div
+        css={css`
+          ${theme((o) => [o.typography(14).bold])}
+          white-space: pre-wrap;
+        `}
+      >
+        <span>あなたの感想と似ている絵文字を</span>
+        <span
+          css={css`
+            ${theme((o) => [o.bg.surface4])}
+          `}
+        >
+          {" "}
+          たくさん連打{" "}
+        </span>
+        <span>{"して、\nいまの気持ちを表現しましょう！"}</span>
+      </div>
+      <div
+        css={css`
+          display: grid;
+          place-content: center;
+          ${theme((o) => [o.margin.top(16)])}
+        `}
+      >
+        <Button variant="Overlay" onClick={onConfirm}>
+          わかった
+        </Button>
+      </div>
+    </div>
+  </div>
+));

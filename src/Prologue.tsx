@@ -45,13 +45,14 @@ export const Prologue = ({
             ${theme((o) => [o.typography(16).bold])}
           `}
         >
-          あなたが好きな人からこんなコクハクをされたらどう思いますか？
+          もし好きな人から電話で告白されたら..手紙で告白されたら...直接告白されたら...！
         </span>
         <span
           css={css`
             ${theme((o) => [o.typography(16).bold])}
           `}
         >
+          これから見せるさまざまなシチュエーションを
           <span
             css={css`
               ${theme((o) => [o.font.brand])}
@@ -94,7 +95,7 @@ export const Prologue = ({
         ) : (
           <Button
             variant="Primary"
-            disabled={loading}
+            disabled={uid === "" || loading}
             size="M"
             onClick={async () => {
               try {
