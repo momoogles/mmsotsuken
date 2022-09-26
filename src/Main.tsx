@@ -3,14 +3,12 @@ import {
   COLUMN_UNIT,
   GUTTER_UNIT,
 } from "@charcoal-ui/foundation";
-import { Button, IconButton } from "@charcoal-ui/react";
+import { Button } from "@charcoal-ui/react";
 import { createTheme } from "@charcoal-ui/styled";
 import { maxWidth } from "@charcoal-ui/utils";
 import {
-  arrow,
   autoPlacement,
   offset,
-  shift,
   Strategy,
   useFloating,
 } from "@floating-ui/react-dom";
@@ -112,17 +110,10 @@ export const Main = ({
   const [reactions, setReactions] = useState<number[]>([]);
   const [tooltip, setTooltip] = useState(true);
 
-  const { x, y, strategy, reference, floating, placement } = useFloating({
+  const { x, y, strategy, reference, floating } = useFloating({
     strategy: "absolute",
     middleware: [autoPlacement({ alignment: "start" }), offset(24)],
   });
-
-  const staticSide = {
-    top: "bottom",
-    right: "left",
-    bottom: "top",
-    left: "right",
-  }[placement.split("-")[0]!];
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
