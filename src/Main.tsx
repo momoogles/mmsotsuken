@@ -871,7 +871,7 @@ const Tooltip = forwardRef<
     >
       <div
         css={css`
-          ${theme((o) => [o.typography(14).bold])}
+          ${theme((o) => [o.typography(14).bold, o.font.text5])}
           white-space: pre-wrap;
         `}
       >
