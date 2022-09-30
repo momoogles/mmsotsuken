@@ -9,7 +9,7 @@ async function main() {
   const snapshot = await getDocs(collection(db, "users"));
   console.log("データの読み取りが完了しました.");
 
-  const data = [["uid", "group", "a", "b", "c", "d", "e"]];
+  const data = [["uid", "group", "a", "b", "c", "d"]];
 
   snapshot.forEach((doc) => {
     const { group, reactions } = doc.data();
