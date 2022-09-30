@@ -2,7 +2,7 @@ import { ComponentProps } from "react";
 import { css, keyframes } from "styled-components";
 import { Twemoji } from "./Emoji";
 
-export const MAX_LEVEL_SIZE = 20;
+export const MAX_LEVEL_SIZE = 32;
 
 export const FloatingEmojis = ({
   floatingEmojis,
@@ -16,7 +16,7 @@ export const FloatingEmojis = ({
   }[];
 }) => {
   const emojiSize = (level: 1 | 2 | 3 | 4 | 5) =>
-    level === 1 ? 12 : level === 2 ? 14 : level === 3 ? 16 : MAX_LEVEL_SIZE;
+    level === 1 ? 16 : level === 2 ? 20 : level === 3 ? 24 : MAX_LEVEL_SIZE;
   return (
     <span
       css={css`

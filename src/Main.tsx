@@ -16,6 +16,7 @@ import {
   ComponentProps,
   FC,
   forwardRef,
+  PropsWithChildren,
   useCallback,
   useEffect,
   useRef,
@@ -105,7 +106,6 @@ export const Main = ({
   onEnd(p: { step: "epilogue"; reactions: number[] }): Promise<void>;
 }) => {
   const [reacted, setReacted] = useState(false);
-  const [endLoading, setEndLoading] = useState(false);
   const reactionCountRef = useRef(0);
   const [reactions, setReactions] = useState<number[]>([]);
   const [tooltip, setTooltip] = useState(true);
@@ -123,6 +123,19 @@ export const Main = ({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
+
+  const handleNext = () => {
+    onNext((step + 1) as 2 | 3 | 4);
+    setReactions((v) => [...v, reactionCountRef.current]);
+    reactionCountRef.current = 0;
+  };
+
+  const handleEnd = async () => {
+    await onEnd({
+      step: "epilogue",
+      reactions: [...reactions, reactionCountRef.current],
+    });
+  };
 
   return (
     <div
@@ -230,91 +243,137 @@ export const Main = ({
               y={y}
               x={x}
               onConfirm={() => setTooltip(false)}
-            />
+            >
+              <span>あなたの感想と似ている絵文字を</span>
+              <span
+                css={css`
+                  ${theme((o) => [o.bg.surface4])}
+                `}
+              >
+                {" "}
+                たくさん連打{" "}
+              </span>
+              <span>{"して、\nいまの気持ちを表現しましょう！"}</span>
+            </Tooltip>
           )}
+          <footer
+            css={css`
+              ${theme((o) => [o.margin.top(40)])}
+            `}
+          >
+            <Footer
+              step={step}
+              reacted={reacted}
+              onNext={handleNext}
+              onEnd={handleEnd}
+            />
+          </footer>
         </div>
       </div>
+    </div>
+  );
+};
 
+const Footer = ({
+  step,
+  reacted,
+  onNext,
+  onEnd,
+}: {
+  step: MainStep;
+  reacted: boolean;
+  onNext(): void;
+  onEnd(): Promise<void>;
+}) => {
+  const [timer, setTimer] = useState(10);
+  const [endLoading, setEndLoading] = useState(false);
+
+  useEffect(() => {
+    if (timer > 0) {
+      const timeoutId = setTimeout(() => {
+        setTimer((v) => v - 1);
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [timer]);
+
+  return (
+    <div
+      css={css`
+        display: grid;
+        place-content: end;
+        place-items: center;
+        grid-auto-flow: column;
+        gap: 16px;
+        max-width: ${MAX_WIDTH}px;
+      `}
+    >
       <div
         css={css`
-          display: grid;
-          place-content: end;
-          place-items: center;
-          grid-auto-flow: column;
-          gap: 16px;
-          max-width: ${MAX_WIDTH};
-          ${theme((o) => [o.margin.top(24)])}
+          display: flex;
         `}
       >
-        <div
-          css={css`
-            display: flex;
-          `}
-        >
-          {([1, 2, 3, 4] as const).map((n) => (
-            <div
-              key={n}
-              css={[
+        {([1, 2, 3, 4] as const).map((n) => (
+          <div
+            key={n}
+            css={[
+              css`
+                display: grid;
+                place-content: center;
+                ${theme((o) => [
+                  o.width.px(40),
+                  o.height.px(40),
+                  o.borderRadius("oval"),
+                  o.typography(12).bold.preserveHalfLeading,
+                  o.font.text2,
+                ])}
+              `,
+              n === step &&
                 css`
-                  display: grid;
-                  place-content: center;
-                  ${theme((o) => [
-                    o.width.px(40),
-                    o.height.px(40),
-                    o.borderRadius("oval"),
-                    o.typography(12).bold.preserveHalfLeading,
-                    o.font.text2,
-                  ])}
+                  ${theme((o) => [o.bg.surface3])}
                 `,
-                n === step &&
-                  css`
-                    ${theme((o) => [o.bg.surface3])}
-                  `,
-                n < step &&
-                  css`
-                    ${theme((o) => [o.font.text4])}
-                  `,
-              ]}
-            >
-              {n}
-            </div>
-          ))}
-        </div>
+              n < step &&
+                css`
+                  ${theme((o) => [o.font.text4])}
+                `,
+            ]}
+          >
+            {n}
+          </div>
+        ))}
+      </div>
+      <div
+        // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
+        key={step}
+      >
         {step === 1 || step === 2 || step === 3 ? (
           <Button
-            // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
-            key={step}
-            disabled={!reacted}
+            disabled={!reacted || timer > 0}
             variant="Primary"
             size="M"
-            onClick={() => {
-              onNext((step + 1) as 2 | 3 | 4);
-              setReactions((v) => [...v, reactionCountRef.current]);
-              reactionCountRef.current = 0;
-            }}
+            onClick={onNext}
           >
-            つぎへ
+            つぎへ{timer > 0 && `(あと${timer}秒)`}
           </Button>
         ) : step === 4 ? (
           <Button
-            // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
-            key={step}
-            disabled={endLoading}
+            disabled={endLoading || timer > 0}
             variant="Primary"
             size="M"
             onClick={async () => {
               try {
                 setEndLoading(true);
-                await onEnd({
-                  step: "epilogue",
-                  reactions: [...reactions, reactionCountRef.current],
-                });
+                await onEnd();
               } finally {
                 setEndLoading(false);
               }
             }}
           >
-            {endLoading ? <Spinner /> : "おわる"}
+            {endLoading ? (
+              <Spinner />
+            ) : (
+              "おわる" + (timer > 0 ? `(あと${timer}秒)` : "")
+            )}
           </Button>
         ) : (
           unreachable(step)
@@ -619,24 +678,24 @@ const EmojiButton = ({
 
   const circleScale =
     level === 1
-      ? 1.02
+      ? 1.0
       : level === 2
-      ? 1.06
+      ? 1.02
       : level === 3
-      ? 1.14
+      ? 1.06
       : level === 4
-      ? 1.22
-      : 1.4;
+      ? 1.32
+      : 1.5;
   const twemojiScale =
     level === 1
       ? 1.0
       : level === 2
-      ? 1.04
+      ? 1.06
       : level === 3
-      ? 1.1
-      : level === 4
       ? 1.2
-      : 1.34;
+      : level === 4
+      ? 1.32
+      : 1.5;
 
   return (
     <Button
@@ -721,10 +780,10 @@ const EmojiButton = ({
                       `
                     : level < 5
                     ? css`
-                        border: 1px solid #b356de;
+                        border: 2px solid #b356de;
                       `
                     : css`
-                        border: 2px solid ${(p) => p.theme.color.assertive};
+                        border: 3px solid ${(p) => p.theme.color.assertive};
                       `,
                   circlePulseAnimationCss({ initScale: circleScale }),
                 ]}
@@ -838,8 +897,13 @@ const circlePulseAnimationCss = ({ initScale }: { initScale: number }) => css`
 
 const Tooltip = forwardRef<
   HTMLDivElement,
-  { strategy: Strategy; x: number | null; y: number | null; onConfirm(): void }
->(({ strategy, y, x, onConfirm }, ref) => (
+  PropsWithChildren<{
+    strategy: Strategy;
+    x: number | null;
+    y: number | null;
+    onConfirm(): void;
+  }>
+>(({ strategy, y, x, onConfirm, children }, ref) => (
   <div
     ref={ref}
     css={css`
@@ -875,16 +939,7 @@ const Tooltip = forwardRef<
           white-space: pre-wrap;
         `}
       >
-        <span>あなたの感想と似ている絵文字を</span>
-        <span
-          css={css`
-            ${theme((o) => [o.bg.surface4])}
-          `}
-        >
-          {" "}
-          たくさん連打{" "}
-        </span>
-        <span>{"して、\nいまの気持ちを表現しましょう！"}</span>
+        {children}
       </div>
       <div
         css={css`
