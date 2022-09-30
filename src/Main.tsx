@@ -604,7 +604,7 @@ const VARIANT: {
   },
 };
 
-const LEVEL_THRESHOLD = [1, 2, 5, 10] as const;
+const LEVEL_THRESHOLD = [2, 5, 10, 18] as const;
 
 const useLevel = () => {
   const growingRef = useRef(false);
