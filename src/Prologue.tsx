@@ -1,13 +1,12 @@
 import styled, { css } from "styled-components";
 import { createTheme } from "@charcoal-ui/styled";
 import { Button, TextField } from "@charcoal-ui/react";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
   columnSystem,
   COLUMN_UNIT,
   GUTTER_UNIT,
 } from "@charcoal-ui/foundation";
-import { Step } from "./types";
 import { Spinner } from "./components/Spinner";
 
 const theme = createTheme(styled);
@@ -15,12 +14,18 @@ const theme = createTheme(styled);
 const TEXT_FIELD_MAX_WIDTH = columnSystem(3, COLUMN_UNIT, GUTTER_UNIT);
 
 export const Prologue = ({
+  typingUid,
+  setTypingUid,
+  error,
   onNext,
 }: {
-  onNext(p: { uid: string; step: Extract<Step, 1> }): Promise<void>;
+  typingUid: string;
+  setTypingUid: Dispatch<SetStateAction<string>>;
+  /** NOTE: 空文字列ならエラーがないとする */
+  error: string | "";
+  onNext(): Promise<void>;
 }) => {
   const [loading, setLoading] = useState(false);
-  const [uid, setUid] = useState("");
   const [isTypingUid, setIsTypingUid] = useState(false);
   return (
     <div
@@ -66,6 +71,7 @@ export const Prologue = ({
       <div
         css={css`
           display: grid;
+          gap: 8px;
           place-items: center;
           margin: auto;
           max-width: ${TEXT_FIELD_MAX_WIDTH}px;
@@ -81,8 +87,10 @@ export const Prologue = ({
             <TextField
               autoFocus
               placeholder="IDを入力"
-              value={uid}
-              onChange={setUid}
+              assistiveText={error}
+              invalid={error !== ""}
+              value={typingUid}
+              onChange={setTypingUid}
               maxLength={20}
               showCount
             />
@@ -95,12 +103,12 @@ export const Prologue = ({
         ) : (
           <Button
             variant="Primary"
-            disabled={uid === "" || loading}
+            disabled={typingUid === "" || loading}
             size="M"
             onClick={async () => {
               try {
                 setLoading(true);
-                await onNext({ uid, step: 1 });
+                await onNext();
               } finally {
                 setLoading(false);
               }

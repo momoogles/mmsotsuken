@@ -53,9 +53,11 @@ export const App = () => {
 const Contents = () => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<Step>("prologue");
-  const [sessionGroup, setSessionGroup] =
+  const [sessionUGroup, setSessionUGroup] =
     useState<UserDocument["group"]>("plain");
+  const [typingUid, setTypingUid] = useState<string>("");
   const [sessionUid, setSessionUid] = useState<string | undefined>(undefined);
+  const [error, setError] = useState("");
 
   const resetScrollTop = () =>
     bodyRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,6 +65,37 @@ const Contents = () => {
   const handleNext = (s: Step) => {
     setStep(s);
     resetScrollTop();
+  };
+
+  const handleEnd = async ({ step, reactions }) => {
+    try {
+      if (sessionUid !== undefined) {
+        await updateUser(db, {
+          id: sessionUid,
+          newDocument: {
+            group: sessionUGroup,
+            locked: true,
+            reactions,
+          },
+        });
+      }
+    } finally {
+      handleNext(step);
+    }
+  };
+
+  const handlePrologueNext = async () => {
+    try {
+      const data = await getUser(db, { id: typingUid });
+      if (data === null) {
+        throw new Error("正しいIDを入力してください");
+      }
+      setSessionUGroup(data.group);
+      setSessionUid(typingUid);
+      return handleNext(data.locked ? "epilogue" : 1);
+    } catch (e) {
+      return setError(`${e}`);
+    }
   };
 
   return (
@@ -100,41 +133,20 @@ const Contents = () => {
         <Aligner>
           {step === "prologue" ? (
             <Prologue
-              onNext={async ({ uid, step }) => {
-                try {
-                  const data = await getUser(db, { id: uid });
-                  if (data === null) {
-                    throw new Error();
-                  }
-                  setSessionGroup(data.group);
-                  setSessionUid(uid);
-                  return handleNext(data.locked ? "epilogue" : step);
-                } catch {
-                  return handleNext(step);
-                }
+              typingUid={typingUid}
+              setTypingUid={(uid) => {
+                setError("");
+                setTypingUid(uid);
               }}
+              error={error}
+              onNext={handlePrologueNext}
             />
           ) : step === 1 || step === 2 || step === 3 || step === 4 ? (
             <Main
               step={step}
-              group={sessionGroup}
+              group={sessionUGroup}
               onNext={handleNext}
-              onEnd={async ({ step, reactions }) => {
-                try {
-                  if (sessionUid !== undefined) {
-                    await updateUser(db, {
-                      id: sessionUid,
-                      newDocument: {
-                        group: sessionGroup,
-                        locked: true,
-                        reactions,
-                      },
-                    });
-                  }
-                } finally {
-                  handleNext(step);
-                }
-              }}
+              onEnd={handleEnd}
             />
           ) : step === "epilogue" ? (
             <Epilogue uid={sessionUid} />
