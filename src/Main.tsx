@@ -40,6 +40,8 @@ const theme = createTheme(styled);
 
 type MainStep = Extract<Step, 1 | 2 | 3 | 4>;
 
+const PAGER_NUMBER_LABEL_SIZE = 24;
+
 const MAX_WIDTH = columnSystem(10, COLUMN_UNIT, GUTTER_UNIT);
 
 const TEXT_NEGATIVE_MARGIN_Y = {
@@ -297,50 +299,97 @@ const Footer = ({
     }
   }, [timer]);
 
+  const timerViewer =
+    timer > 0 ? (
+      <div
+        css={css`
+          position: absolute;
+          bottom: 100%;
+          right: 0;
+          ${theme((o) => [
+            o.font.text2,
+            o.typography(14).bold,
+            o.padding.vertical(4),
+          ])}
+        `}
+      >
+        (あと{timer}秒)
+      </div>
+    ) : null;
+
   return (
     <div
       css={css`
-        display: grid;
-        place-content: end;
-        place-items: center;
-        grid-auto-flow: column;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
         gap: 16px;
-        max-width: ${MAX_WIDTH}px;
       `}
     >
       <div
         css={css`
-          display: flex;
+          flex: 1;
+          max-width: ${columnSystem(3, COLUMN_UNIT, GUTTER_UNIT)}px;
         `}
       >
-        {([1, 2, 3, 4] as const).map((n) => (
-          <div
-            key={n}
-            css={[
-              css`
-                display: grid;
-                place-content: center;
-                ${theme((o) => [
-                  o.width.px(40),
-                  o.height.px(40),
-                  o.borderRadius("oval"),
-                  o.typography(12).bold.preserveHalfLeading,
-                  o.font.text2,
-                ])}
-              `,
-              n === step &&
+        <div
+          css={css`
+            position: relative;
+            z-index: 0;
+            overflow: hidden;
+            ${theme((o) => [
+              o.borderRadius("oval"),
+              o.border.default,
+              o.height.px(8),
+              o.bg.surface2,
+            ])}
+
+            ::before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              transform: translateX(-${100 - step * 20}%);
+              ${theme((o) => [o.bg.brand])}
+            }
+          `}
+        />
+        <div
+          css={css`
+            display: flex;
+            justify-content: space-between;
+            margin: 0 -${PAGER_NUMBER_LABEL_SIZE / 2 - 4}px;
+          `}
+        >
+          {([0, 1, 2, 3, 4, 5] as const).map((n) => (
+            <div
+              key={n}
+              css={[
                 css`
-                  ${theme((o) => [o.bg.surface3])}
+                  display: grid;
+                  place-items: center;
+                  ${theme((o) => [
+                    o.margin.top(4),
+                    o.width.px(PAGER_NUMBER_LABEL_SIZE),
+                    o.height.px(PAGER_NUMBER_LABEL_SIZE),
+                    o.borderRadius("oval"),
+                    o.typography(12).bold.preserveHalfLeading,
+                    o.font.text2,
+                  ])}
                 `,
-              n < step &&
-                css`
-                  ${theme((o) => [o.font.text4])}
-                `,
-            ]}
-          >
-            {n}
-          </div>
-        ))}
+                n === step &&
+                  css`
+                    ${theme((o) => [o.bg.surface3])}
+                  `,
+                n < step &&
+                  css`
+                    ${theme((o) => [o.font.text4])}
+                  `,
+              ]}
+            >
+              {n}
+            </div>
+          ))}
+        </div>
       </div>
       <div
         // NOTE: stepが変わったらkeyでDOMを破壊してfocusを外す
@@ -348,15 +397,24 @@ const Footer = ({
       >
         {step === 1 || step === 2 || step === 3 ? (
           <Button
+            css={css`
+              position: relative;
+              z-index: 0;
+            `}
             disabled={!reacted || timer > 0}
             variant="Primary"
             size="M"
             onClick={onNext}
           >
-            つぎへ{timer > 0 && `(あと${timer}秒)`}
+            つぎへ
+            {timerViewer}
           </Button>
         ) : step === 4 ? (
           <Button
+            css={css`
+              position: relative;
+              z-index: 0;
+            `}
             disabled={endLoading || timer > 0}
             variant="Primary"
             size="M"
@@ -369,11 +427,8 @@ const Footer = ({
               }
             }}
           >
-            {endLoading ? (
-              <Spinner />
-            ) : (
-              "おわる" + (timer > 0 ? `(あと${timer}秒)` : "")
-            )}
+            {endLoading ? <Spinner /> : "おわる"}
+            {timerViewer}
           </Button>
         ) : (
           unreachable(step)
