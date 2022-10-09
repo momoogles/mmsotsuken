@@ -52,6 +52,7 @@ export const App = () => {
 
 const Contents = () => {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [mobile, setMobile] = useState(false);
   const [step, setStep] = useState<Step>("prologue");
   const [sessionUGroup, setSessionUGroup] =
     useState<UserDocument["group"]>("plain");
@@ -76,6 +77,7 @@ const Contents = () => {
             group: sessionUGroup,
             locked: true,
             reactions,
+            mobile,
           },
         });
       }
@@ -106,6 +108,7 @@ const Contents = () => {
         min-height: 100vh;
         min-height: 100lvh;
       `}
+      onTouchStart={() => setMobile(true)}
     >
       <header
         css={css`
