@@ -12,8 +12,8 @@ async function main() {
   const data = [["uid", "group", "a", "b", "c", "d"]];
 
   snapshot.forEach((doc) => {
-    const { group, reactions } = doc.data();
-    if (group && reactions) {
+    const { locked, group, reactions } = doc.data();
+    if (locked && group && reactions) {
       const row = [doc.id, group, ...reactions];
       console.log("データ:", row);
       data.push(row);
