@@ -127,6 +127,7 @@ export const Main = ({
   }, []);
 
   const handleNext = () => {
+    setTooltip(false);
     onNext((step + 1) as 2 | 3 | 4);
     setReactions((v) => [...v, reactionCountRef.current]);
     reactionCountRef.current = 0;
