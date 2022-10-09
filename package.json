@@ -22,11 +22,11 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
-    "@charcoal-ui/foundation": "^1.0.1-alpha.0",
+    "@charcoal-ui/foundation": "alpha",
     "@charcoal-ui/react": "alpha",
     "@charcoal-ui/styled": "alpha",
     "@charcoal-ui/theme": "alpha",
-    "@charcoal-ui/utils": "^1.1.0-alpha.0",
+    "@charcoal-ui/utils": "alpha",
     "@floating-ui/react-dom": "^1.0.0",
     "firebase": "^9.10.0",
     "react": "^18.2.0",
