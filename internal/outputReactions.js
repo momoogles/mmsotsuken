@@ -21,7 +21,7 @@ async function main() {
   });
 
   const output = stringify(data);
-  fs.writeFileSync("dist.csv", output);
+  fs.writeFileSync("mmsotsuken.csv", output);
   console.log("ファイルを書き出しました.");
 
   exit();
