@@ -205,6 +205,26 @@ export const Main = ({
             {MAIN_TEXT[step].description}
           </div>
         </div>
+        {tooltip && (
+          <Tooltip
+            ref={floating}
+            strategy={strategy}
+            y={y}
+            x={x}
+            onConfirm={() => setTooltip(false)}
+          >
+            <span>あなたの感想と似ている絵文字を</span>
+            <span
+              css={css`
+                ${theme((o) => [o.bg.surface4])}
+              `}
+            >
+              {" "}
+              たくさん連打{" "}
+            </span>
+            <span>{"して、\nいまの気持ちを表現しましょう！"}</span>
+          </Tooltip>
+        )}
         <div
           key={step}
           css={css`
@@ -238,26 +258,6 @@ export const Main = ({
               />
             ))}
           </div>
-          {tooltip && (
-            <Tooltip
-              ref={floating}
-              strategy={strategy}
-              y={y}
-              x={x}
-              onConfirm={() => setTooltip(false)}
-            >
-              <span>あなたの感想と似ている絵文字を</span>
-              <span
-                css={css`
-                  ${theme((o) => [o.bg.surface4])}
-                `}
-              >
-                {" "}
-                たくさん連打{" "}
-              </span>
-              <span>{"して、\nいまの気持ちを表現しましょう！"}</span>
-            </Tooltip>
-          )}
           <footer
             css={css`
               ${theme((o) => [o.margin.top(40)])}
