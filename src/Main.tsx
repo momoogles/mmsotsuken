@@ -108,8 +108,7 @@ export const Main = ({
   onEnd(p: { step: "epilogue"; reactions: number[] }): Promise<void>;
 }) => {
   const [reacted, setReacted] = useState(false);
-  const reactionCountRef = useRef(0);
-  const [reactions, setReactions] = useState<number[]>([]);
+  const reactionsRef = useRef<Map<MainStep, number>>(new Map());
   const [tooltip, setTooltip] = useState(true);
 
   const { x, y, strategy, reference, floating } = useFloating({
@@ -127,16 +126,18 @@ export const Main = ({
   }, []);
 
   const handleNext = () => {
-    setTooltip(false);
     onNext((step + 1) as 2 | 3 | 4);
-    setReactions((v) => [...v, reactionCountRef.current]);
-    reactionCountRef.current = 0;
+    return setTooltip(false);
   };
 
   const handleEnd = async () => {
+    const reactions: number[] = [];
+    for (const [step, value] of reactionsRef.current.entries()) {
+      reactions[step - 1] = value;
+    }
     await onEnd({
       step: "epilogue",
-      reactions: [...reactions, reactionCountRef.current],
+      reactions,
     });
   };
 
@@ -253,8 +254,9 @@ export const Main = ({
                 emoji={v}
                 step={step}
                 onClick={() => {
+                  const reaction = reactionsRef.current.get(step);
+                  reactionsRef.current.set(step, (reaction ?? 0) + 1);
                   setReacted(true);
-                  reactionCountRef.current += 1;
                 }}
               />
             ))}

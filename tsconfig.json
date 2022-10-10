@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
+    "target": "ES2015",
     "lib": ["ES2015", "DOM"],
+    "moduleResolution": "node",
     "experimentalDecorators": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
