@@ -5,6 +5,7 @@
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html --public-url ./",
     "firebase:create-users": "node ./internal/createUsers.js",
+    "firebase:delete-users": "node ./internal/deleteUsers.js",
     "firebase:output-reactions": "node ./internal/outputReactions.js"
   },
   "devDependencies": {
